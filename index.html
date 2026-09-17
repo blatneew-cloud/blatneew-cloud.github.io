@@ -9,7 +9,7 @@
 <div id="loading" style="display:grid;place-items:center;min-height:100vh;font-weight:700">Loading goalie analytics…</div>
 <script>
 (async()=>{
-  let html=await (await fetch('base.html?v=20260917-live',{cache:'no-store'})).text();
+  let html=await (await fetch('base.html?v=20260917-fix',{cache:'no-store'})).text();
 
   html=html.replace(
     '<a href="#games" data-route="games">Game Log</a>',
@@ -56,13 +56,15 @@
     '<h3 class="section-title">GA & GSAx (xGA-GA)</h3>'
   );
 
-  html=html.replace('</body>','<script src="extras.js?v=20260917-live"></script>\n</body>');
+  const extraTag='<scr'+'ipt src="extras.js?v=20260917-fix"></scr'+'ipt>\n</body>';
+  html=html.replace('</body>',extraTag);
 
   document.open();
   document.write(html);
   document.close();
 })().catch(err=>{
-  document.getElementById('loading').textContent='Unable to load dashboard. Refresh the page.';
+  const loading=document.getElementById('loading');
+  if(loading) loading.textContent='Unable to load dashboard. Refresh the page.';
   console.error(err);
 });
 </script>
