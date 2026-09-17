@@ -9,7 +9,8 @@
 <div id="loading" style="display:grid;place-items:center;min-height:100vh;font-weight:700">Loading goalie analytics…</div>
 <script>
 (async()=>{
-  let html=await (await fetch('base.html?v=20260917-fix',{cache:'no-store'})).text();
+  const API_URL='https://script.google.com/macros/s/AKfycbxAX0ysb7reWEMpI7ymFjNHwDPawZxTqsL71t3p4D1jwyuMUkT6GTsEWM2PA7VKLeU7/exec';
+  let html=await (await fetch('base.html?v=20260917-api',{cache:'no-store'})).text();
 
   html=html.replace(
     '<a href="#games" data-route="games">Game Log</a>',
@@ -38,7 +39,7 @@
 
   html=html.replace(
     'This hosted site is configured to read the Games tab directly from Google Sheets on page load. If the sheet is not publicly readable, the site falls back to the most recently embedded data.',
-    'This hosted site reads live game data from Google Sheets on page load. Shot Context and Consistency also pull from the live logger data, so newly logged games appear without rebuilding the site.'
+    'This hosted site reads live goalie data through a read-only Apps Script endpoint. Games, Shot Context, and Consistency update from the private Google Sheet whenever the site is refreshed.'
   );
 
   html=html.replace(
@@ -56,7 +57,64 @@
     '<h3 class="section-title">GA & GSAx (xGA-GA)</h3>'
   );
 
-  const extraTag='<scr'+'ipt src="extras.js?v=20260917-fix"></scr'+'ipt>\n</body>';
+  const liveLoader = `
+function loadLiveGoalieData(){
+  function apiJsonp(){
+    return new Promise((resolve,reject)=>{
+      const cb='__clarksonMain_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+      const script=document.createElement('script');
+      let done=false;
+      const timer=setTimeout(()=>finish(new Error('Live API timeout')),10000);
+      function finish(err,data){if(done)return;done=true;clearTimeout(timer);try{delete window[cb]}catch(e){};script.remove();err?reject(err):resolve(data)}
+      window[cb]=data=>finish(null,data);
+      script.src='${API_URL}?callback='+encodeURIComponent(cb)+'&t='+Date.now();
+      script.onerror=()=>finish(new Error('Live API unavailable'));
+      document.head.appendChild(script);
+    });
+  }
+  function n(v){const x=Number(v);return Number.isFinite(x)?x:0}
+  function yes(v){return ['yes','true','1'].includes(String(v??'').trim().toLowerCase())}
+  function dateIso(v){const s=String(v??'').trim(),m=s.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/);return m?m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0'):s}
+  function convert(payload){
+    if(!payload||payload.ok!==true||!Array.isArray(payload.games)) throw new Error('Invalid live API response');
+    const games=payload.games.filter(r=>r['Opponent']).map((r,i)=>({
+      game:n(r['Game #'])||i+1,
+      gameId:String(r['Game ID']||''),
+      goalie:String(r['Goalie']||''),
+      date:dateIso(r['Date']),
+      season:String(r['Season']||''),
+      opponent:String(r['Opponent']||''),
+      oppOffRank:r['Opp Off Rank']===''?null:r['Opp Off Rank'],
+      location:String(r['H/A']||''),
+      result:String(r['Result']||''),
+      teamGF:n(r['Team GF']),
+      oppGF:n(r['Opp Final GF']),
+      toi:String(r['TOI']||''),
+      started:yes(r['Started?']),
+      pulled:yes(r['Pulled?']),
+      ot:yes(r['OT?']),
+      so:yes(r['SO?']),
+      b2b:yes(r['B2B?']),
+      xGA:n(r['xGA']),
+      gradesSA:{'A+':n(r['A+ SA']),A:n(r['A SA']),B:n(r['B SA']),C:n(r['C SA'])},
+      gradesGA:{'A+':n(r['A+ GA']),A:n(r['A GA']),B:n(r['B GA']),C:n(r['C GA'])},
+      rebound:{green:n(r['Reb G']),red:n(r['Reb R']),black:n(r['Reb B'])},
+      glove:{green:n(r['Glv G']),red:n(r['Glv R']),black:n(r['Glv B'])},
+      playmaking:{green:n(r['PM G']),red:n(r['PM R']),black:n(r['PM B'])},
+      pipes:r['Pipes']||null,
+      note:''
+    }));
+    if(!games.length) throw new Error('No games returned by live API');
+    const roster=[...new Set(['#30 Soderwall','#70 Gaudreau','#35 Labre',...games.map(g=>g.goalie).filter(Boolean)])];
+    return {team:'Clarkson',roster,games,live:true,updatedAt:payload.updatedAt||null};
+  }
+  return apiJsonp().then(convert).catch(err=>{console.warn('Using embedded backup data:',err);return {...window.GOALIE_SITE_DATA,live:false}});
+}
+`;
+
+  html=html.replace('loadLiveGoalieData().then(DATA=>{',liveLoader+'\nloadLiveGoalieData().then(DATA=>{');
+
+  const extraTag='<scr'+'ipt src="extras-v2.js?v=20260917-api"></scr'+'ipt>\n</body>';
   html=html.replace('</body>',extraTag);
 
   document.open();
