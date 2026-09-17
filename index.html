@@ -1,17 +1,70 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Clarkson Goalie Analytics</title></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Clarkson Goalie Analytics</title>
+</head>
 <body style="margin:0;font-family:system-ui;background:#f4f6f5;color:#17211c">
 <div id="loading" style="display:grid;place-items:center;min-height:100vh;font-weight:700">Loading goalie analytics…</div>
 <script>
 (async()=>{
-  let html=await (await fetch('base.html?v=20260831-2',{cache:'no-store'})).text();
-  const patches=[["      data:{labels:games.map(g=>`G${g.game}`),datasets:[\n        {label:\"SV%\",data:games.map(g=>g.svp),borderColor:c.green,backgroundColor:c.green,tension:.25,pointRadius:4},\n        {label:\"xSV%\",data:games.map(g=>g.xsvp),borderColor:c.gold,backgroundColor:c.gold,tension:.25,pointRadius:4}\n      ]},","      data:{labels:games.map(g=>g.opponent),datasets:[\n        {label:\"SV%\",data:games.map(g=>g.svp),borderColor:c.green,backgroundColor:c.green,tension:.25,pointRadius:4,pointHoverRadius:6},\n        {label:\"xSV%\",data:games.map(g=>g.xsvp),borderColor:c.gold,backgroundColor:c.gold,tension:.25,pointRadius:4,pointHoverRadius:6}\n      ]},"],["    chart(\"goalsGradeChart\",{type:\"bar\",data:{labels:[\"A+\",\"A\",\"B\",\"C\"],datasets:[{label:\"Goals Against\",data:[\"A+\",\"A\",\"B\",\"C\"].map(k=>a.gradesGA[k]),backgroundColor:c.green}]},options:baseOptions(\"Goals\")});","    const gradeColors={\"A+\":\"#111111\",\"A\":\"#d84a4a\",\"B\":\"#e3b629\",\"C\":\"#2f8a57\"};\n    chart(\"goalsGradeChart\",{type:\"bar\",data:{labels:[\"A+\",\"A\",\"B\",\"C\"],datasets:[{label:\"Goals Against\",data:[\"A+\",\"A\",\"B\",\"C\"].map(k=>a.gradesGA[k]),backgroundColor:[\"A+\",\"A\",\"B\",\"C\"].map(k=>gradeColors[k]),borderColor:[\"A+\",\"A\",\"B\",\"C\"].map(k=>gradeColors[k]),borderWidth:1}]},options:baseOptions(\"Goals\")});"],["    chart(\"incGa\",{type:\"bar\",data:{labels:wins.map(w=>`${w.start}-${w.end}`),datasets:[\n      {label:\"GA\",data:wins.map(w=>w.a.ga),backgroundColor:c.green},\n      {label:\"xGA-GA\",data:wins.map(w=>w.a.gsax),backgroundColor:c.gold}\n    ]},options:baseOptions(\"Goals\")});\n    chart(\"incSv\",{type:\"line\",data:{labels:wins.map(w=>`${w.start}-${w.end}`),datasets:[\n      {label:\"SV%\",data:wins.map(w=>w.a.svp),borderColor:c.green,backgroundColor:c.green,pointRadius:5},\n      {label:\"SV%-xSV%\",data:wins.map(w=>w.a.svp-w.a.xsvp),borderColor:c.gold,backgroundColor:c.gold,pointRadius:5}\n    ]},options:baseOptions(\"Rate\")});\n    chart(\"incGrades\",{type:\"bar\",data:{labels:wins.map(w=>`${w.start}-${w.end}`),datasets:[\"A+\",\"A\",\"B\",\"C\"].map((k,i)=>({label:k,data:wins.map(w=>w.a.gradesSA[k])}))},options:{...baseOptions(\"Shots\"),plugins:{legend:{position:\"bottom\"}}}});","    chart(\"incGa\",{type:\"line\",data:{labels:wins.map(w=>`${w.start}-${w.end}`),datasets:[\n      {label:\"GA\",data:wins.map(w=>w.a.ga),borderColor:c.green,backgroundColor:c.green,tension:.25,pointRadius:5,pointHoverRadius:7},\n      {label:\"GSAx (xGA-GA)\",data:wins.map(w=>w.a.gsax),borderColor:c.gold,backgroundColor:c.gold,tension:.25,pointRadius:5,pointHoverRadius:7}\n    ]},options:baseOptions(\"Goals\")});\n    chart(\"incSv\",{type:\"line\",data:{labels:wins.map(w=>`${w.start}-${w.end}`),datasets:[\n      {label:\"SV%\",data:wins.map(w=>w.a.svp),borderColor:c.green,backgroundColor:c.green,tension:.25,pointRadius:5,pointHoverRadius:7},\n      {label:\"SV%-xSV%\",data:wins.map(w=>w.a.svp-w.a.xsvp),borderColor:c.gold,backgroundColor:c.gold,tension:.25,pointRadius:5,pointHoverRadius:7}\n    ]},options:baseOptions(\"Rate\")});\n    const incrementalGradeColors={\"A+\":\"#111111\",\"A\":\"#d84a4a\",\"B\":\"#e3b629\",\"C\":\"#2f8a57\"};\n    const incGradeOptions=baseOptions(\"Shots\");\n    incGradeOptions.scales.x.stacked=true;\n    incGradeOptions.scales.y.stacked=true;\n    chart(\"incGrades\",{type:\"bar\",data:{labels:wins.map(w=>`${w.start}-${w.end}`),datasets:[\"A+\",\"A\",\"B\",\"C\"].map(k=>({label:k,data:wins.map(w=>w.a.gradesSA[k]),backgroundColor:incrementalGradeColors[k],borderColor:incrementalGradeColors[k],borderWidth:1,stack:\"shotGrades\"}))},options:incGradeOptions});"],["<h3 class=\"section-title\">GA & xGA-GA</h3>","<h3 class=\"section-title\">GA & GSAx (xGA-GA)</h3>"]];
-  for(const [from,to] of patches){
-    if(!html.includes(from)) console.warn('Chart patch target not found');
-    html=html.replace(from,to);
-  }
-  document.open(); document.write(html); document.close();
-})().catch(err=>{document.getElementById('loading').textContent='Unable to load dashboard. Refresh the page.';console.error(err);});
+  let html=await (await fetch('base.html?v=20260917-live',{cache:'no-store'})).text();
+
+  html=html.replace(
+    '<a href="#games" data-route="games">Game Log</a>',
+    '<a href="#games" data-route="games">Game Log</a>\n      <a href="#context" data-route="context">Shot Context</a>\n      <a href="#consistency" data-route="consistency">Consistency</a>'
+  );
+
+  html=html.replace(
+    'Clarkson Goalie Analytics · SIG GameDay + box score workflow',
+    'Clarkson Goalie Analytics · SIG GameDay + box score + manual context workflow'
+  );
+
+  html=html.replace(
+    'else if(state.route==="incremental") renderIncremental(games);\n    else if(state.route==="periods") renderPeriods();',
+    'else if(state.route==="incremental") renderIncremental(games);\n    else if(state.route==="context" || state.route==="consistency") { window.dispatchEvent(new CustomEvent("goalie-extra-route")); return; }\n    else if(state.route==="periods") renderPeriods();'
+  );
+
+  html=html.replace(
+    '<section class="panel"><h3 class="section-title">Data Sources</h3><p><strong>SIG GameDay</strong> supplies shot grades, xGA, rebound tracking, glove tracking, and puck handling.</p><p><strong>Official box scores</strong> supply date, opponent, result, final score, TOI, and start information.</p></section>',
+    '<section class="panel"><h3 class="section-title">Data Sources</h3><p><strong>SIG GameDay</strong> supplies shot grades, xGA, rebound tracking, glove tracking, and puck handling.</p><p><strong>Manual context logger</strong> adds rush/in-zone/rebound, traffic, time, score state, rebound outcome, and puck-touch context.</p><p><strong>Official box scores</strong> supply date, opponent, result, final score, TOI, and start information.</p></section>'
+  );
+
+  html=html.replace(
+    '<section class="panel"><h3 class="section-title">Current Scope</h3><p>Overview, Game Log, and 5/10-game Incremental Stats are live. Opponent offensive rank is supported when you begin using it later in the season.</p><p>PK and period data are intentionally excluded for now.</p></section>',
+    '<section class="panel"><h3 class="section-title">Current Scope</h3><p>Overview, Game Log, Shot Context, Consistency, and 5/10-game Incremental Stats are live. Opponent offensive rank is supported when you begin using it later in the season.</p><p>PK and period data are intentionally excluded for now.</p></section>'
+  );
+
+  html=html.replace(
+    'This hosted site is configured to read the Games tab directly from Google Sheets on page load. If the sheet is not publicly readable, the site falls back to the most recently embedded data.',
+    'This hosted site reads live game data from Google Sheets on page load. Shot Context and Consistency also pull from the live logger data, so newly logged games appear without rebuilding the site.'
+  );
+
+  html=html.replace(
+    'data:{labels:games.map(g=>`G${g.game}`),datasets:[\n        {label:"SV%",data:games.map(g=>g.svp),borderColor:c.green,backgroundColor:c.green,tension:.25,pointRadius:4},\n        {label:"xSV%",data:games.map(g=>g.xsvp),borderColor:c.gold,backgroundColor:c.gold,tension:.25,pointRadius:4}\n      ]},',
+    'data:{labels:games.map(g=>g.opponent),datasets:[\n        {label:"SV%",data:games.map(g=>g.svp),borderColor:c.green,backgroundColor:c.green,tension:.25,pointRadius:4,pointHoverRadius:6},\n        {label:"xSV%",data:games.map(g=>g.xsvp),borderColor:c.gold,backgroundColor:c.gold,tension:.25,pointRadius:4,pointHoverRadius:6}\n      ]},'
+  );
+
+  html=html.replace(
+    'chart("goalsGradeChart",{type:"bar",data:{labels:["A+","A","B","C"],datasets:[{label:"Goals Against",data:["A+","A","B","C"].map(k=>a.gradesGA[k]),backgroundColor:c.green}]},options:baseOptions("Goals")});',
+    'const gradeColors={"A+":"#111111","A":"#d84a4a","B":"#e3b629","C":"#2f8a57"};\n    chart("goalsGradeChart",{type:"bar",data:{labels:["A+","A","B","C"],datasets:[{label:"Goals Against",data:["A+","A","B","C"].map(k=>a.gradesGA[k]),backgroundColor:["A+","A","B","C"].map(k=>gradeColors[k]),borderColor:["A+","A","B","C"].map(k=>gradeColors[k]),borderWidth:1}]},options:baseOptions("Goals")});'
+  );
+
+  html=html.replace(
+    '<h3 class="section-title">GA & xGA-GA</h3>',
+    '<h3 class="section-title">GA & GSAx (xGA-GA)</h3>'
+  );
+
+  html=html.replace('</body>','<script src="extras.js?v=20260917-live"></script>\n</body>');
+
+  document.open();
+  document.write(html);
+  document.close();
+})().catch(err=>{
+  document.getElementById('loading').textContent='Unable to load dashboard. Refresh the page.';
+  console.error(err);
+});
 </script>
-</body></html>
+</body>
+</html>
