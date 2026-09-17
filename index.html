@@ -10,7 +10,7 @@
 <script>
 (async()=>{
   const API_URL='https://script.google.com/macros/s/AKfycbxAX0ysb7reWEMpI7ymFjNHwDPawZxTqsL71t3p4D1jwyuMUkT6GTsEWM2PA7VKLeU7/exec';
-  let html=await (await fetch('base.html?v=20260917-svfix2',{cache:'no-store'})).text();
+  let html=await (await fetch('base.html?v=20260917-svfix3',{cache:'no-store'})).text();
 
   html=html.replace(
     '<a href="#games" data-route="games">Game Log</a>',
@@ -114,8 +114,8 @@ function loadLiveGoalieData(){
 
   html=html.replace('loadLiveGoalieData().then(DATA=>{',liveLoader+'\nloadLiveGoalieData().then(DATA=>{');
 
-  const extraTag='<scr'+'ipt src="extras-v2.js?v=20260917-svfix2"></scr'+'ipt>\n'+
-    '<scr'+'ipt src="shot-axis-fix.js?v=20260917-svfix2"></scr'+'ipt>\n</body>';
+  const extraTag='<scr'+'ipt src="extras-v2.js?v=20260917-svfix3"></scr'+'ipt>\n'+
+    '<scr'+'ipt src="shot-axis-fix.js?v=20260917-svfix3"></scr'+'ipt>\n</body>';
   html=html.replace('</body>',extraTag);
 
   document.open();
