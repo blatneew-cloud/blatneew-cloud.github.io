@@ -114,7 +114,8 @@ function loadLiveGoalieData(){
 
   html=html.replace('loadLiveGoalieData().then(DATA=>{',liveLoader+'\nloadLiveGoalieData().then(DATA=>{');
 
-  const extraTag='<scr'+'ipt src="extras-v2.js?v=20260917-api"></scr'+'ipt>\n</body>';
+  const extraTag='<scr'+'ipt src="extras-v2.js?v=20260917-svaxis"></scr'+'ipt>\n'+
+    '<scr'+'ipt>if(window.Chart){Chart.register({id:"shotContextSvAxis",beforeUpdate(chart){if(chart.canvas&&["ctxType","ctxScore"].includes(chart.canvas.id)){const y=chart.options.scales.y||(chart.options.scales.y={});y.min=.5;y.max=1;y.ticks={...(y.ticks||{}),stepSize:.05,callback:v=>Number(v).toFixed(3)};}}});}</scr'+'ipt>\n</body>';
   html=html.replace('</body>',extraTag);
 
   document.open();
